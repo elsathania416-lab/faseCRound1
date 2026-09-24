@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Madness - Round 1 (10×10) | MaScie 2026/2027 Sekolah Harapan Prestasi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tone.js for web audio synth background music -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;700;800;900&family=Space+Grotesk:wght@700;800&family=JetBrains+Mono:wght@700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+        .heading-font {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        .num-font {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        /* Equalizer visualizer bar animation */
+        @keyframes eq-bar {
+            0%, 100% { height: 4px; }
+            50% { height: 16px; }
+        }
+        .eq-bar-1 { animation: eq-bar 0.35s infinite ease-in-out; }
+        .eq-bar-2 { animation: eq-bar 0.55s infinite ease-in-out 0.1s; }
+        .eq-bar-3 { animation: eq-bar 0.45s infinite ease-in-out 0.2s; }
+        .eq-bar-4 { animation: eq-bar 0.65s infinite ease-in-out 0.05s; }
+
+        /* Crisp projector cell borders */
+        .grid-cell {
+            border: 1.5px solid #cbd5e1;
+        }
+        .dark .grid-cell {
+            border: 1.5px solid #334155;
+        }
+    </style>
+</head>
+<body id="appBody" class="bg-slate-100 text-slate-900 h-screen w-screen overflow-hidden flex flex-col justify-between p-2 sm:p-4">
+
+    <div id="mainContainer" class="max-w-6xl w-full mx-auto bg-white border-2 border-slate-300 rounded-2xl shadow-2xl overflow-hidden p-3 sm:p-5 flex flex-col h-full justify-between relative transition-colors duration-200">
+        
+        <!-- Header Section -->
+        <header class="text-center border-b-2 border-slate-200 pb-2 relative flex-shrink-0">
+            <!-- Exact Branding Title Requested -->
+            <div class="inline-block bg-indigo-900 text-amber-300 font-extrabold px-4 py-1 rounded-full text-xs sm:text-sm tracking-wide uppercase mb-1 border-2 border-indigo-700 shadow-sm">
+                MaScie 2026/2027 Sekolah Harapan Prestasi
+            </div>
+            
+            <h1 class="heading-font text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight uppercase">
+                ROUND 1: MATH MADNESS
+            </h1>
+            <p class="text-xs sm:text-sm font-black text-rose-700 uppercase tracking-widest">
+                — 10×10 Integers Grid Addition —
+            </p>
+            <p class="text-xs sm:text-sm text-slate-800 font-bold mt-1 max-w-3xl mx-auto bg-amber-100 py-1 px-3 rounded-lg border border-amber-300">
+                <span class="font-extrabold text-amber-900 uppercase">Instruction:</span> Calculate the sum of all 100 integers (-9 to -1 and 1 to 9) in the grid as fast as possible!
+            </p>
+        </header>
+
+        <!-- Controls Bar -->
+        <div class="flex flex-wrap justify-center items-center gap-2 my-2 flex-shrink-0 text-xs sm:text-sm">
+            <!-- Voice Opening Announcement Button -->
+            <button onclick="playVoiceIntro()" id="btnVoiceIntro" class="flex items-center gap-1.5 bg-rose-600 hover:bg-rose-700 text-white font-extrabold px-3.5 py-1.5 rounded-xl transition-all shadow border-2 border-rose-800 active:scale-95">
+                <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+                <span id="voiceBtnText">Play Voice Intro</span>
+            </button>
+
+            <!-- Projector / Theme Toggle Button -->
+            <button onclick="toggleProjectorTheme()" id="btnTheme" class="flex items-center gap-1.5 bg-slate-900 hover:bg-slate-800 text-amber-300 font-extrabold px-3.5 py-1.5 rounded-xl transition-all shadow border-2 border-slate-700 active:scale-95">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                <span id="themeBtnText">Projector High-Contrast Mode</span>
+            </button>
+
+            <!-- Fullscreen Button -->
+            <button onclick="toggleFullscreen()" id="btnFullscreen" class="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-white font-extrabold px-3.5 py-1.5 rounded-xl transition-all shadow border border-slate-600 active:scale-95">
+                <svg id="fullscreenIconExpand" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4"></path></svg>
+                <span id="fullscreenBtnText">Fullscreen</span>
+            </button>
+
+            <!-- Music Control Button -->
+            <button onclick="toggleMusic()" id="btnMusic" class="flex items-center gap-2 bg-gradient-to-r from-purple-700 via-indigo-700 to-rose-700 hover:from-purple-600 hover:to-rose-600 text-white font-extrabold px-4 py-1.5 rounded-xl transition-all shadow-lg active:scale-95 border border-purple-400/30">
+                <svg id="musicIconPlay" class="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z"/>
+                </svg>
+                <svg id="musicIconPause" class="w-4 h-4 fill-current hidden" viewBox="0 0 24 24">
+                    <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+                </svg>
+                <span id="musicBtnText">Play Battle Music</span>
+                
+                <!-- Equalizer Animation Widget -->
+                <div id="eqWidget" class="hidden flex items-end gap-0.5 h-3 ml-1">
+                    <span class="w-1 bg-rose-300 rounded-full eq-bar-1"></span>
+                    <span class="w-1 bg-amber-300 rounded-full eq-bar-2"></span>
+                    <span class="w-1 bg-cyan-300 rounded-full eq-bar-3"></span>
+                    <span class="w-1 bg-emerald-300 rounded-full eq-bar-4"></span>
+                </div>
+            </button>
+
+            <!-- Answer Key Button -->
+            <button onclick="toggleAnswerKey()" id="btnAnswerKey" class="flex items-center gap-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold px-4 py-1.5 rounded-xl transition-all shadow-lg active:scale-95 border-2 border-amber-600">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                <span id="btnText">Show Answer Key</span>
+            </button>
+        </div>
+
+        <!-- Grid Container -->
+        <div class="flex-1 min-h-0 flex items-center justify-center overflow-hidden my-1">
+            <div id="gridWrapper" class="w-full h-full flex flex-col justify-center overflow-auto rounded-xl border-2 border-slate-400 shadow-md bg-white">
+                <table class="w-full h-full text-center border-collapse">
+                    <thead>
+                        <tr id="gridHeader" class="bg-slate-900 text-cyan-300 font-extrabold text-xs sm:text-base border-b-2 border-slate-800">
+                            <th class="p-1 sm:p-2 border-r border-slate-700 text-[10px] sm:text-xs text-amber-300">R \ C</th>
+                            <th class="p-1 sm:p-2 border-r border-slate-700">C1</th>
+                            <th class="p-1 sm:p-2 border-r border-slate-700">C2</th>
+                            <th class="p-1 sm:p-2 border-r border-slate-700">C3</th>
+                            <th class="p-1 sm:p-2 border-r border-slate-700">C4</th>
+                            <th class="p-1 sm:p-2 border-r border-slate-700">C5</th>
+                            <th class="p-1 sm:p-2 border-r border-slate-700">C6</th>
+                            <th class="p-1 sm:p-2 border-r border-slate-700">C7</th>
+                            <th class="p-1 sm:p-2 border-r border-slate-700">C8</th>
+                            <th class="p-1 sm:p-2 border-r border-slate-700">C9</th>
+                            <th class="p-1 sm:p-2 border-r border-slate-700">C10</th>
+                            <th id="colSumHeader" class="p-1 sm:p-2 hidden text-amber-300 bg-amber-900 border-l-2 border-amber-500">Row Sum</th>
+                        </tr>
+                    </thead>
+                    <tbody id="gridBody" class="num-font font-black text-base sm:text-xl md:text-2xl">
+                        <!-- Rows dynamically generated by JS -->
+                    </tbody>
+                    <tfoot id="gridFoot" class="hidden num-font font-black text-sm sm:text-lg border-t-4 border-slate-900 bg-amber-100 text-amber-950">
+                        <!-- Column Sums & Grand Total generated by JS -->
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+        <!-- Answer Key Popup Modal Overlay -->
+        <div id="answerModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+            <div id="modalBox" class="bg-white border-4 border-amber-500 rounded-2xl p-5 sm:p-6 max-w-2xl w-full shadow-2xl relative max-h-[90vh] overflow-y-auto text-slate-900">
+                <button onclick="toggleAnswerKey()" class="absolute top-4 right-4 text-slate-700 hover:text-black bg-slate-200 p-1.5 rounded-lg border border-slate-400 font-bold">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+                
+                <h3 class="heading-font text-xl sm:text-2xl font-extrabold text-amber-800 mb-3 flex items-center gap-2 border-b-2 border-slate-200 pb-2">
+                    <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    Answer Key Breakdown (10×10 Grid)
+                </h3>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs sm:text-sm font-bold">
+                    <div class="bg-slate-100 p-3 rounded-xl border border-slate-300">
+                        <h4 class="font-extrabold text-indigo-900 mb-2 border-b border-slate-300 pb-1">Row Totals:</h4>
+                        <ul id="rowSumsList" class="grid grid-cols-2 gap-x-3 gap-y-1 num-font text-slate-800"></ul>
+                    </div>
+                    <div class="bg-slate-100 p-3 rounded-xl border border-slate-300">
+                        <h4 class="font-extrabold text-indigo-900 mb-2 border-b border-slate-300 pb-1">Column Totals:</h4>
+                        <ul id="colSumsList" class="grid grid-cols-2 gap-x-3 gap-y-1 num-font text-slate-800"></ul>
+                    </div>
+                </div>
+
+                <div class="mt-4 p-4 bg-amber-400 border-2 border-amber-600 rounded-xl text-center shadow">
+                    <span class="text-sm sm:text-base font-black text-slate-950 uppercase tracking-wider">Grand Total (Sum of all 100 integers): </span>
+                    <span id="grandTotalVal" class="text-3xl sm:text-4xl font-black text-slate-950 num-font ml-2"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="text-center text-[11px] font-bold text-slate-600 border-t border-slate-300 pt-1 flex-shrink-0">
+            MaScie 2026/2027 Sekolah Harapan Prestasi • Math Madness Round 1 Integers Standard
+        </footer>
+
+    </div>
+
+    <script>
+        // 10x10 Matrix containing integers from -9 to -1 and 1 to 9
+        const currentGrid = [
+            [-5,  8, -3,  9, -7,  4, -2,  6, -8,  1],
+            [ 6, -9,  2, -4,  8, -1,  7, -6,  5, -3],
+            [-1,  7, -8,  3, -5,  9, -4,  2, -9,  6],
+            [ 4, -2,  9, -7,  1, -8,  6, -3,  8, -5],
+            [-6,  5, -1,  8, -9,  3, -7,  9, -4,  2],
+            [ 9, -4,  6, -2,  5, -6,  1, -8,  3, -7],
+            [-8,  1, -5,  7, -3,  2, -9,  4, -1,  8],
+            [ 3, -7,  4, -9,  6, -5,  8, -1,  7, -2],
+            [-2,  9, -6,  1, -4,  8, -3,  5, -7,  4],
+            [ 7, -3,  8, -5,  2, -9,  5, -4,  9, -6]
+        ];
+
+        let showAnswer = false;
+        let isDarkMode = false; // Default to Light High-Contrast for Projectors
+        let isPlayingMusic = false;
+        let audioInitialized = false;
+        let isSpeakingIntro = false;
+
+        // Tone.js Synth variables
+        let bassSynth, leadSynth, hihatSynth, kickSynth;
+        let bassLoop, leadLoop, drumLoop;
+
+        // Lower background music volume slightly during speech, restore after
+        function setMusicDucked(ducked) {
+            if (!audioInitialized) return;
+            if (bassSynth) bassSynth.volume.value = ducked ? -18 : -10;
+            if (leadSynth) leadSynth.volume.value = ducked ? -22 : -14;
+            if (kickSynth) kickSynth.volume.value = ducked ? -12 : -6;
+            if (hihatSynth) hihatSynth.volume.value = ducked ? -26 : -20;
+        }
+
+        // Start battle music if not already running
+        async function startMusicIfNotPlaying() {
+            await Tone.start();
+            initAudioEngine();
+            if (!isPlayingMusic) {
+                bassLoop.start(0);
+                leadLoop.start(0);
+                drumLoop.start(0);
+                Tone.Transport.start();
+
+                isPlayingMusic = true;
+                document.getElementById('musicBtnText').innerText = "Pause Music";
+                document.getElementById('musicIconPlay').classList.add('hidden');
+                document.getElementById('musicIconPause').classList.remove('hidden');
+                document.getElementById('eqWidget').classList.remove('hidden');
+                document.getElementById('btnMusic').classList.add('ring-2', 'ring-rose-400');
+            }
+        }
+
+        // Play competition fanfare jingle effect in background
+        async function playIntroFanfareSound() {
+            try {
+                await Tone.start();
+                const now = Tone.now();
+                
+                // Synth for grand competition brass/lead sting
+                const fanfareSynth = new Tone.PolySynth(Tone.Synth, {
+                    oscillator: { type: 'sawtooth' },
+                    envelope: { attack: 0.05, decay: 0.3, sustain: 0.4, release: 1.2 }
+                }).toDestination();
+                fanfareSynth.volume.value = -8;
+
+                // Percussion roll / impact
+                const drumSynth = new Tone.MembraneSynth({
+                    pitchDecay: 0.08,
+                    octaves: 4,
+                    oscillator: { type: 'sine' },
+                    envelope: { attack: 0.001, decay: 0.5, sustain: 0.01, release: 0.4 }
+                }).toDestination();
+                drumSynth.volume.value = -4;
+
+                // Dramatic drum roll intro
+                drumSynth.triggerAttackRelease('C1', '8n', now);
+                drumSynth.triggerAttackRelease('G1', '8n', now + 0.15);
+                drumSynth.triggerAttackRelease('C2', '4n', now + 0.3);
+
+                // Competition Fanfare Chords (Epic opening)
+                fanfareSynth.triggerAttackRelease(['C4', 'E4', 'G4', 'C5'], '8n', now + 0.3);
+                fanfareSynth.triggerAttackRelease(['D4', 'F#4', 'A4', 'D5'], '8n', now + 0.5);
+                fanfareSynth.triggerAttackRelease(['G3', 'D4', 'G4', 'B4', 'G5'], '2n', now + 0.7);
+            } catch (e) {
+                console.log("Audio fanfare sound trigger:", e);
+            }
+        }
+
+        // Voice Announcement Intro Function (Plays simultaneous competition music & Voice Narration)
+        async function playVoiceIntro() {
+            const voiceBtnText = document.getElementById('voiceBtnText');
+            const introText = "Welcome to the 1st round: Math Madness! Instructions: Calculate the sum of all 100 integers in the grid as fast as possible! Good luck to all competitors!";
+
+            if (isSpeakingIntro) {
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                }
+                isSpeakingIntro = false;
+                voiceBtnText.innerText = "Play Voice Intro";
+                setMusicDucked(false);
+                return;
+            }
+
+            isSpeakingIntro = true;
+            voiceBtnText.innerText = "🔊 Speaking...";
+
+            // 1. Play background competition music simultaneously
+            await startMusicIfNotPlaying();
+            // 2. Duck music volume so narrator speech is prominent & crisp
+            setMusicDucked(true);
+
+            // Play fanfare intro sting
+            playIntroFanfareSound();
+
+            const finishSpeaking = () => {
+                isSpeakingIntro = false;
+                voiceBtnText.innerText = "Play Voice Intro";
+                setMusicDucked(false); // Restore full volume battle music
+            };
+
+            // Try Gemini TTS API
+            try {
+                const payload = {
+                    contents: [{ 
+                        parts: [{ 
+                            text: `Say in a grand, energetic, professional competition stadium announcer voice speaking at a clear moderate pace: ${introText}` 
+                        }] 
+                    }],
+                    generationConfig: {
+                        responseModalities: ["AUDIO"],
+                        speechConfig: {
+                            voiceConfig: { prebuiltVoiceConfig: { voiceName: "Puck" } }
+                        }
+                    }
+                };
+
+                const apiKey = "";
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                const part = result?.candidates?.[0]?.content?.parts?.[0];
+                const audioData = part?.inlineData?.data;
+                const mimeType = part?.inlineData?.mimeType;
+
+                if (audioData && mimeType) {
+                    const sampleRateMatch = mimeType.match(/rate=(\d+)/);
+                    const sampleRate = sampleRateMatch ? parseInt(sampleRateMatch[1], 10) : 24000;
+
+                    const binaryData = atob(audioData);
+                    const pcm16 = new Int16Array(binaryData.length / 2);
+                    for (let i = 0; i < pcm16.length; i++) {
+                        pcm16[i] = binaryData.charCodeAt(i * 2) | (binaryData.charCodeAt(i * 2 + 1) << 8);
+                    }
+
+                    const wavBlob = pcmToWav(pcm16, sampleRate);
+                    const audioUrl = URL.createObjectURL(wavBlob);
+                    const audio = new Audio(audioUrl);
+
+                    audio.onended = finishSpeaking;
+                    audio.onerror = finishSpeaking;
+
+                    await audio.play();
+                    return;
+                }
+            } catch (e) {
+                console.log("Gemini TTS fallback to browser Web Speech API:", e);
+            }
+
+            // Web Speech API Fallback
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(introText);
+                utterance.rate = 0.88;
+                utterance.pitch = 1.0;
+                utterance.lang = 'en-US';
+
+                utterance.onend = finishSpeaking;
+                utterance.onerror = finishSpeaking;
+
+                window.speechSynthesis.speak(utterance);
+            } else {
+                finishSpeaking();
+            }
+        }
+
+        // Voice Announcement Intro Function (Gemini TTS with Web Speech API fallback)
+        async function playVoiceIntro() {
+            const voiceBtnText = document.getElementById('voiceBtnText');
+            const introText = "Welcome to the 1st round: Math Madness! Instructions: Calculate the sum of all 100 integers in the grid as fast as possible! Good luck to all competitors!";
+
+            if (isSpeakingIntro) {
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                }
+                isSpeakingIntro = false;
+                voiceBtnText.innerText = "Play Voice Intro";
+                return;
+            }
+
+            isSpeakingIntro = true;
+            voiceBtnText.innerText = "🔊 Speaking...";
+
+            // Play background fanfare audio sting
+            playIntroFanfareSound();
+
+            // 1. Try Gemini TTS API with explicit instruction for normal steady pacing
+            try {
+                const payload = {
+                    contents: [{ 
+                        parts: [{ 
+                            text: `Say in a grand, clear, composed, and articulate pace like a professional competition stadium announcer speaking at a normal moderate speed (do NOT talk fast, speak at a normal steady tempo): ${introText}` 
+                        }] 
+                    }],
+                    generationConfig: {
+                        responseModalities: ["AUDIO"],
+                        speechConfig: {
+                            voiceConfig: { prebuiltVoiceConfig: { voiceName: "Puck" } }
+                        }
+                    }
+                };
+
+                const apiKey = "";
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                const part = result?.candidates?.[0]?.content?.parts?.[0];
+                const audioData = part?.inlineData?.data;
+                const mimeType = part?.inlineData?.mimeType;
+
+                if (audioData && mimeType) {
+                    const sampleRateMatch = mimeType.match(/rate=(\d+)/);
+                    const sampleRate = sampleRateMatch ? parseInt(sampleRateMatch[1], 10) : 24000;
+
+                    const binaryData = atob(audioData);
+                    const pcm16 = new Int16Array(binaryData.length / 2);
+                    for (let i = 0; i < pcm16.length; i++) {
+                        pcm16[i] = binaryData.charCodeAt(i * 2) | (binaryData.charCodeAt(i * 2 + 1) << 8);
+                    }
+
+                    const wavBlob = pcmToWav(pcm16, sampleRate);
+                    const audioUrl = URL.createObjectURL(wavBlob);
+                    const audio = new Audio(audioUrl);
+
+                    audio.onended = () => {
+                        isSpeakingIntro = false;
+                        voiceBtnText.innerText = "Play Voice Intro";
+                    };
+
+                    await audio.play();
+                    return;
+                }
+            } catch (e) {
+                console.log("Gemini TTS fallback to browser Web Speech API:", e);
+            }
+
+            // 2. Web Speech API Fallback with steady/normal speed
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(introText);
+                utterance.rate = 0.88; // Normal clear pace (not fast)
+                utterance.pitch = 1.0;
+                utterance.lang = 'en-US';
+
+                utterance.onend = () => {
+                    isSpeakingIntro = false;
+                    voiceBtnText.innerText = "Play Voice Intro";
+                };
+                utterance.onerror = () => {
+                    isSpeakingIntro = false;
+                    voiceBtnText.innerText = "Play Voice Intro";
+                };
+
+                window.speechSynthesis.speak(utterance);
+            } else {
+                isSpeakingIntro = false;
+                voiceBtnText.innerText = "Play Voice Intro";
+            }
+        }
+
+        // Helper function to build WAV audio header for PCM16 speech
+        function pcmToWav(pcm16Data, sampleRate) {
+            const numChannels = 1;
+            const bytesPerSample = 2;
+            const blockAlign = numChannels * bytesPerSample;
+            const byteRate = sampleRate * blockAlign;
+            const dataSize = pcm16Data.length * bytesPerSample;
+            const buffer = new ArrayBuffer(44 + dataSize);
+            const view = new DataView(buffer);
+
+            const writeString = (v, offset, str) => {
+                for (let i = 0; i < str.length; i++) v.setUint8(offset + i, str.charCodeAt(i));
+            };
+
+            writeString(view, 0, 'RIFF');
+            view.setUint32(4, 36 + dataSize, true);
+            writeString(view, 8, 'WAVE');
+            writeString(view, 12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true);
+            view.setUint16(22, numChannels, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, byteRate, true);
+            view.setUint16(32, blockAlign, true);
+            view.setUint16(34, 16, true);
+            writeString(view, 36, 'data');
+            view.setUint32(40, dataSize, true);
+
+            let offset = 44;
+            for (let i = 0; i < pcm16Data.length; i++, offset += 2) {
+                view.setInt16(offset, pcm16Data[i], true);
+            }
+
+            return new Blob([buffer], { type: 'audio/wav' });
+        }
+
+        function renderGrid() {
+            const tbody = document.getElementById('gridBody');
+            const tfoot = document.getElementById('gridFoot');
+            const rowSumsList = document.getElementById('rowSumsList');
+            const colSumsList = document.getElementById('colSumsList');
+            const grandTotalVal = document.getElementById('grandTotalVal');
+
+            tbody.innerHTML = '';
+            rowSumsList.innerHTML = '';
+            colSumsList.innerHTML = '';
+
+            let colTotals = new Array(10).fill(0);
+            let grandTotal = 0;
+
+            currentGrid.forEach((row, rIdx) => {
+                let rowSum = row.reduce((a, b) => a + b, 0);
+                grandTotal += rowSum;
+
+                // Build Table Row
+                let tr = document.createElement('tr');
+                if (isDarkMode) {
+                    tr.className = (rIdx % 2 === 0) ? 'bg-slate-900 hover:bg-slate-800' : 'bg-slate-950 hover:bg-slate-800';
+                } else {
+                    tr.className = (rIdx % 2 === 0) ? 'bg-white hover:bg-slate-100' : 'bg-slate-50 hover:bg-slate-100';
+                }
+                
+                let rowHeaderStyle = isDarkMode ? 'bg-slate-900 text-amber-400' : 'bg-slate-200 text-slate-900 font-extrabold';
+                let rowHtml = `<td class="p-1 sm:p-2 border-r grid-cell text-[10px] sm:text-xs font-black ${rowHeaderStyle}">Row ${rIdx + 1}</td>`;
+                
+                row.forEach((val, cIdx) => {
+                    // High-contrast color formatting optimized for projectors
+                    let numStyle = '';
+                    if (val < 0) {
+                        numStyle = isDarkMode ? 'text-rose-400 font-black' : 'text-red-700 font-black';
+                    } else {
+                        numStyle = isDarkMode ? 'text-emerald-300 font-black' : 'text-blue-800 font-black';
+                    }
+                    rowHtml += `<td class="p-1 sm:p-2 border-r grid-cell ${numStyle}">${val}</td>`;
+                    colTotals[cIdx] += val;
+                });
+
+                let rowSumBg = isDarkMode ? 'bg-amber-950 text-amber-300' : 'bg-amber-200 text-slate-950 border-l-2 border-amber-500 font-black';
+                rowHtml += `<td class="p-1 sm:p-2 ${showAnswer ? '' : 'hidden'} ${rowSumBg}">${rowSum}</td>`;
+
+                tr.innerHTML = rowHtml;
+                tbody.appendChild(tr);
+
+                // Row list breakdown
+                rowSumsList.innerHTML += `<li class="flex justify-between border-b border-slate-300 py-0.5"><span>Row ${rIdx + 1}:</span><span class="font-extrabold text-amber-700">${rowSum}</span></li>`;
+            });
+
+            // Column list breakdown
+            colTotals.forEach((cSum, cIdx) => {
+                colSumsList.innerHTML += `<li class="flex justify-between border-b border-slate-300 py-0.5"><span>Col ${cIdx + 1}:</span><span class="font-extrabold text-amber-700">${cSum}</span></li>`;
+            });
+
+            // Footer Row (Col Sums & Grand Total)
+            let footHeaderStyle = isDarkMode ? 'bg-slate-900 text-amber-400' : 'bg-slate-200 text-slate-900 font-extrabold';
+            let footHtml = `<tr><td class="p-1 sm:p-2 border-r grid-cell text-[10px] sm:text-xs font-black ${footHeaderStyle}">Col Sum</td>`;
+            colTotals.forEach(cSum => {
+                let colSumBg = isDarkMode ? 'bg-amber-950 text-amber-300' : 'bg-amber-200 text-slate-950 font-black';
+                footHtml += `<td class="p-1 sm:p-2 border-r grid-cell ${colSumBg}">${cSum}</td>`;
+            });
+            footHtml += `<td class="p-1 sm:p-2 text-slate-950 bg-amber-400 font-black border-l-2 border-amber-600">${grandTotal}</td></tr>`;
+            tfoot.innerHTML = footHtml;
+
+            grandTotalVal.innerText = grandTotal;
+        }
+
+        // Projector High-Contrast Theme Toggle
+        function toggleProjectorTheme() {
+            isDarkMode = !isDarkMode;
+            const appBody = document.getElementById('appBody');
+            const mainContainer = document.getElementById('mainContainer');
+            const gridWrapper = document.getElementById('gridWrapper');
+            const modalBox = document.getElementById('modalBox');
+            const themeBtnText = document.getElementById('themeBtnText');
+
+            if (isDarkMode) {
+                appBody.classList.remove('bg-slate-100', 'text-slate-900');
+                appBody.classList.add('bg-slate-950', 'text-slate-100', 'dark');
+
+                mainContainer.classList.remove('bg-white', 'border-slate-300');
+                mainContainer.classList.add('bg-slate-900', 'border-slate-800');
+
+                gridWrapper.classList.remove('bg-white', 'border-slate-400');
+                gridWrapper.classList.add('bg-slate-950', 'border-slate-800');
+
+                modalBox.classList.remove('bg-white', 'text-slate-900');
+                modalBox.classList.add('bg-slate-900', 'text-slate-100');
+
+                themeBtnText.innerText = "Switch to Light Projector Mode";
+            } else {
+                appBody.classList.remove('bg-slate-950', 'text-slate-100', 'dark');
+                appBody.classList.add('bg-slate-100', 'text-slate-900');
+
+                mainContainer.classList.remove('bg-slate-900', 'border-slate-800');
+                mainContainer.classList.add('bg-white', 'border-slate-300');
+
+                gridWrapper.classList.remove('bg-slate-950', 'border-slate-800');
+                gridWrapper.classList.add('bg-white', 'border-slate-400');
+
+                modalBox.classList.remove('bg-slate-900', 'text-slate-100');
+                modalBox.classList.add('bg-white', 'text-slate-900');
+
+                themeBtnText.innerText = "Projector High-Contrast Mode";
+            }
+
+            renderGrid();
+        }
+
+        function toggleAnswerKey() {
+            showAnswer = !showAnswer;
+            
+            const btnText = document.getElementById('btnText');
+            const colSumHeader = document.getElementById('colSumHeader');
+            const gridFoot = document.getElementById('gridFoot');
+            const answerModal = document.getElementById('answerModal');
+
+            if (showAnswer) {
+                btnText.innerText = "Hide Answer Key";
+                colSumHeader.classList.remove('hidden');
+                gridFoot.classList.remove('hidden');
+                answerModal.classList.remove('hidden');
+            } else {
+                btnText.innerText = "Show Answer Key";
+                colSumHeader.classList.add('hidden');
+                gridFoot.classList.add('hidden');
+                answerModal.classList.add('hidden');
+            }
+
+            renderGrid();
+        }
+
+        function toggleFullscreen() {
+            const btnText = document.getElementById('fullscreenBtnText');
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log(`Error attempting to enable fullscreen: ${err.message}`);
+                });
+                btnText.innerText = "Exit Fullscreen";
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+                btnText.innerText = "Fullscreen";
+            }
+        }
+
+        document.addEventListener('fullscreenchange', () => {
+            const btnText = document.getElementById('fullscreenBtnText');
+            if (!document.fullscreenElement) {
+                btnText.innerText = "Fullscreen";
+            } else {
+                btnText.innerText = "Exit Fullscreen";
+            }
+        });
+
+        function initAudioEngine() {
+            if (audioInitialized) return;
+
+            Tone.Transport.bpm.value = 142;
+
+            bassSynth = new Tone.MonoSynth({
+                oscillator: { type: 'sawtooth' },
+                filter: { Q: 3, type: 'lowpass', rollover: -24 },
+                envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.1 },
+                filterEnvelope: { attack: 0.01, decay: 0.15, sustain: 0.2, baseFrequency: 80, octaves: 3.5 }
+            }).toDestination();
+            bassSynth.volume.value = -10;
+
+            leadSynth = new Tone.PolySynth(Tone.Synth, {
+                oscillator: { type: 'triangle' },
+                envelope: { attack: 0.005, decay: 0.1, sustain: 0.05, release: 0.1 }
+            }).toDestination();
+            leadSynth.volume.value = -14;
+
+            kickSynth = new Tone.MembraneSynth({
+                pitchDecay: 0.05,
+                octaves: 6,
+                oscillator: { type: 'sine' },
+                envelope: { attack: 0.001, decay: 0.4, sustain: 0.01, release: 0.4 }
+            }).toDestination();
+            kickSynth.volume.value = -6;
+
+            hihatSynth = new Tone.NoiseSynth({
+                noise: { type: 'white' },
+                envelope: { attack: 0.001, decay: 0.04, sustain: 0, release: 0.04 }
+            }).toDestination();
+            hihatSynth.volume.value = -20;
+
+            const bassNotes = ['A1', 'A1', 'C2', 'A1', 'D2', 'A1', 'Eb2', 'E2'];
+            let bassIdx = 0;
+            bassLoop = new Tone.Loop(time => {
+                let note = bassNotes[bassIdx % bassNotes.length];
+                bassSynth.triggerAttackRelease(note, '16n', time);
+                bassIdx++;
+            }, '16n');
+
+            const arpNotes = [
+                ['A3', 'E4'], ['C4'], ['E4', 'A4'], ['C5'],
+                ['D4', 'F4'], ['B4'], ['E4', 'G#4'], ['E5']
+            ];
+            let arpIdx = 0;
+            leadLoop = new Tone.Loop(time => {
+                let note = arpNotes[arpIdx % arpNotes.length];
+                leadSynth.triggerAttackRelease(note, '16n', time);
+                arpIdx++;
+            }, '8n');
+
+            let step = 0;
+            drumLoop = new Tone.Loop(time => {
+                if (step % 4 === 0) {
+                    kickSynth.triggerAttackRelease('A0', '8n', time);
+                }
+                if (step % 2 === 1 || step % 4 === 2) {
+                    hihatSynth.triggerAttackRelease('16n', time);
+                }
+                step = (step + 1) % 16;
+            }, '16n');
+
+            audioInitialized = true;
+        }
+
+        async function toggleMusic() {
+            const btnMusic = document.getElementById('btnMusic');
+            const musicBtnText = document.getElementById('musicBtnText');
+            const musicIconPlay = document.getElementById('musicIconPlay');
+            const musicIconPause = document.getElementById('musicIconPause');
+            const eqWidget = document.getElementById('eqWidget');
+
+            await Tone.start();
+            initAudioEngine();
+
+            if (!isPlayingMusic) {
+                bassLoop.start(0);
+                leadLoop.start(0);
+                drumLoop.start(0);
+                Tone.Transport.start();
+
+                isPlayingMusic = true;
+                musicBtnText.innerText = "Pause Music";
+                musicIconPlay.classList.add('hidden');
+                musicIconPause.classList.remove('hidden');
+                eqWidget.classList.remove('hidden');
+                btnMusic.classList.add('ring-2', 'ring-rose-400');
+            } else {
+                Tone.Transport.stop();
+                bassLoop.stop();
+                leadLoop.stop();
+                drumLoop.stop();
+
+                isPlayingMusic = false;
+                musicBtnText.innerText = "Play Battle Music";
+                musicIconPlay.classList.remove('hidden');
+                musicIconPause.classList.add('hidden');
+                eqWidget.classList.add('hidden');
+                btnMusic.classList.remove('ring-2', 'ring-rose-400');
+            }
+        }
+
+        // Initialize grid on load
+        renderGrid();
+    </script>
+</body>
+</html>
