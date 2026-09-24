@@ -44,7 +44,6 @@
         
         <!-- Header Section -->
         <header class="text-center border-b-2 border-slate-200 pb-2 relative flex-shrink-0">
-            <!-- Exact Branding Title Requested -->
             <div class="inline-block bg-indigo-900 text-amber-300 font-extrabold px-4 py-1 rounded-full text-xs sm:text-sm tracking-wide uppercase mb-1 border-2 border-indigo-700 shadow-sm">
                 MaScie 2026/2027 Sekolah Harapan Prestasi
             </div>
@@ -62,11 +61,15 @@
 
         <!-- Controls Bar -->
         <div class="flex flex-wrap justify-center items-center gap-2 my-2 flex-shrink-0 text-xs sm:text-sm">
-            <!-- Voice Opening Announcement Button -->
-            <button onclick="playVoiceIntro()" id="btnVoiceIntro" class="flex items-center gap-1.5 bg-rose-600 hover:bg-rose-700 text-white font-extrabold px-3.5 py-1.5 rounded-xl transition-all shadow border-2 border-rose-800 active:scale-95">
-                <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
-                <span id="voiceBtnText">Play Voice Intro</span>
-            </button>
+            <!-- Stopwatch Widget -->
+            <div id="stopwatchWidget" class="flex items-center gap-2 bg-slate-900 border-2 border-emerald-500 text-white font-extrabold px-3 py-1 rounded-xl shadow-md">
+                <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span id="stopwatchDisplay" class="num-font text-base sm:text-lg text-emerald-400 tracking-wider min-w-[5rem] text-center">00:00.0</span>
+                <button onclick="toggleStopwatch()" id="btnStopwatchStart" class="bg-emerald-600 hover:bg-emerald-500 text-white px-2.5 py-1 rounded-lg text-xs font-black transition active:scale-95">Start</button>
+                <button onclick="resetStopwatch()" id="btnStopwatchReset" class="bg-slate-700 hover:bg-slate-600 text-slate-200 px-2 py-1 rounded-lg text-xs font-black transition active:scale-95">Reset</button>
+            </div>
 
             <!-- Projector / Theme Toggle Button -->
             <button onclick="toggleProjectorTheme()" id="btnTheme" class="flex items-center gap-1.5 bg-slate-900 hover:bg-slate-800 text-amber-300 font-extrabold px-3.5 py-1.5 rounded-xl transition-all shadow border-2 border-slate-700 active:scale-95">
@@ -188,318 +191,65 @@
             [ 7, -3,  8, -5,  2, -9,  5, -4,  9, -6]
         ];
 
+        // Stopwatch variables
+        let stopwatchInterval = null;
+        let stopwatchStartTime = 0;
+        let stopwatchElapsedTime = 0;
+        let isStopwatchRunning = false;
+
+        function toggleStopwatch() {
+            const btnStart = document.getElementById('btnStopwatchStart');
+            if (isStopwatchRunning) {
+                // Pause
+                clearInterval(stopwatchInterval);
+                isStopwatchRunning = false;
+                btnStart.innerText = 'Start';
+                btnStart.classList.remove('bg-amber-600', 'hover:bg-amber-500');
+                btnStart.classList.add('bg-emerald-600', 'hover:bg-emerald-500');
+            } else {
+                // Start / Resume
+                stopwatchStartTime = Date.now() - stopwatchElapsedTime;
+                stopwatchInterval = setInterval(updateStopwatch, 100);
+                isStopwatchRunning = true;
+                btnStart.innerText = 'Pause';
+                btnStart.classList.remove('bg-emerald-600', 'hover:bg-emerald-500');
+                btnStart.classList.add('bg-amber-600', 'hover:bg-amber-500');
+            }
+        }
+
+        function resetStopwatch() {
+            clearInterval(stopwatchInterval);
+            isStopwatchRunning = false;
+            stopwatchElapsedTime = 0;
+            const btnStart = document.getElementById('btnStopwatchStart');
+            btnStart.innerText = 'Start';
+            btnStart.classList.remove('bg-amber-600', 'hover:bg-amber-500');
+            btnStart.classList.add('bg-emerald-600', 'hover:bg-emerald-500');
+            document.getElementById('stopwatchDisplay').innerText = '00:00.0';
+        }
+
+        function updateStopwatch() {
+            stopwatchElapsedTime = Date.now() - stopwatchStartTime;
+            let totalTenths = Math.floor(stopwatchElapsedTime / 100);
+            let tenths = totalTenths % 10;
+            let totalSeconds = Math.floor(stopwatchElapsedTime / 1000);
+            let seconds = totalSeconds % 60;
+            let minutes = Math.floor(totalSeconds / 60);
+
+            let mStr = String(minutes).padStart(2, '0');
+            let sStr = String(seconds).padStart(2, '0');
+            
+            document.getElementById('stopwatchDisplay').innerText = `${mStr}:${sStr}.${tenths}`;
+        }
+
         let showAnswer = false;
-        let isDarkMode = false; // Default to Light High-Contrast for Projectors
+        let isDarkMode = false;
         let isPlayingMusic = false;
         let audioInitialized = false;
-        let isSpeakingIntro = false;
 
         // Tone.js Synth variables
         let bassSynth, leadSynth, hihatSynth, kickSynth;
         let bassLoop, leadLoop, drumLoop;
-
-        // Lower background music volume slightly during speech, restore after
-        function setMusicDucked(ducked) {
-            if (!audioInitialized) return;
-            if (bassSynth) bassSynth.volume.value = ducked ? -18 : -10;
-            if (leadSynth) leadSynth.volume.value = ducked ? -22 : -14;
-            if (kickSynth) kickSynth.volume.value = ducked ? -12 : -6;
-            if (hihatSynth) hihatSynth.volume.value = ducked ? -26 : -20;
-        }
-
-        // Start battle music if not already running
-        async function startMusicIfNotPlaying() {
-            await Tone.start();
-            initAudioEngine();
-            if (!isPlayingMusic) {
-                bassLoop.start(0);
-                leadLoop.start(0);
-                drumLoop.start(0);
-                Tone.Transport.start();
-
-                isPlayingMusic = true;
-                document.getElementById('musicBtnText').innerText = "Pause Music";
-                document.getElementById('musicIconPlay').classList.add('hidden');
-                document.getElementById('musicIconPause').classList.remove('hidden');
-                document.getElementById('eqWidget').classList.remove('hidden');
-                document.getElementById('btnMusic').classList.add('ring-2', 'ring-rose-400');
-            }
-        }
-
-        // Play competition fanfare jingle effect in background
-        async function playIntroFanfareSound() {
-            try {
-                await Tone.start();
-                const now = Tone.now();
-                
-                // Synth for grand competition brass/lead sting
-                const fanfareSynth = new Tone.PolySynth(Tone.Synth, {
-                    oscillator: { type: 'sawtooth' },
-                    envelope: { attack: 0.05, decay: 0.3, sustain: 0.4, release: 1.2 }
-                }).toDestination();
-                fanfareSynth.volume.value = -8;
-
-                // Percussion roll / impact
-                const drumSynth = new Tone.MembraneSynth({
-                    pitchDecay: 0.08,
-                    octaves: 4,
-                    oscillator: { type: 'sine' },
-                    envelope: { attack: 0.001, decay: 0.5, sustain: 0.01, release: 0.4 }
-                }).toDestination();
-                drumSynth.volume.value = -4;
-
-                // Dramatic drum roll intro
-                drumSynth.triggerAttackRelease('C1', '8n', now);
-                drumSynth.triggerAttackRelease('G1', '8n', now + 0.15);
-                drumSynth.triggerAttackRelease('C2', '4n', now + 0.3);
-
-                // Competition Fanfare Chords (Epic opening)
-                fanfareSynth.triggerAttackRelease(['C4', 'E4', 'G4', 'C5'], '8n', now + 0.3);
-                fanfareSynth.triggerAttackRelease(['D4', 'F#4', 'A4', 'D5'], '8n', now + 0.5);
-                fanfareSynth.triggerAttackRelease(['G3', 'D4', 'G4', 'B4', 'G5'], '2n', now + 0.7);
-            } catch (e) {
-                console.log("Audio fanfare sound trigger:", e);
-            }
-        }
-
-        // Voice Announcement Intro Function (Plays simultaneous competition music & Voice Narration)
-        async function playVoiceIntro() {
-            const voiceBtnText = document.getElementById('voiceBtnText');
-            const introText = "Welcome to the 1st round: Math Madness! Instructions: Calculate the sum of all 100 integers in the grid as fast as possible! Good luck to all competitors!";
-
-            if (isSpeakingIntro) {
-                if ('speechSynthesis' in window) {
-                    window.speechSynthesis.cancel();
-                }
-                isSpeakingIntro = false;
-                voiceBtnText.innerText = "Play Voice Intro";
-                setMusicDucked(false);
-                return;
-            }
-
-            isSpeakingIntro = true;
-            voiceBtnText.innerText = "🔊 Speaking...";
-
-            // 1. Play background competition music simultaneously
-            await startMusicIfNotPlaying();
-            // 2. Duck music volume so narrator speech is prominent & crisp
-            setMusicDucked(true);
-
-            // Play fanfare intro sting
-            playIntroFanfareSound();
-
-            const finishSpeaking = () => {
-                isSpeakingIntro = false;
-                voiceBtnText.innerText = "Play Voice Intro";
-                setMusicDucked(false); // Restore full volume battle music
-            };
-
-            // Try Gemini TTS API
-            try {
-                const payload = {
-                    contents: [{ 
-                        parts: [{ 
-                            text: `Say in a grand, energetic, professional competition stadium announcer voice speaking at a clear moderate pace: ${introText}` 
-                        }] 
-                    }],
-                    generationConfig: {
-                        responseModalities: ["AUDIO"],
-                        speechConfig: {
-                            voiceConfig: { prebuiltVoiceConfig: { voiceName: "Puck" } }
-                        }
-                    }
-                };
-
-                const apiKey = "";
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
-
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                const result = await response.json();
-                const part = result?.candidates?.[0]?.content?.parts?.[0];
-                const audioData = part?.inlineData?.data;
-                const mimeType = part?.inlineData?.mimeType;
-
-                if (audioData && mimeType) {
-                    const sampleRateMatch = mimeType.match(/rate=(\d+)/);
-                    const sampleRate = sampleRateMatch ? parseInt(sampleRateMatch[1], 10) : 24000;
-
-                    const binaryData = atob(audioData);
-                    const pcm16 = new Int16Array(binaryData.length / 2);
-                    for (let i = 0; i < pcm16.length; i++) {
-                        pcm16[i] = binaryData.charCodeAt(i * 2) | (binaryData.charCodeAt(i * 2 + 1) << 8);
-                    }
-
-                    const wavBlob = pcmToWav(pcm16, sampleRate);
-                    const audioUrl = URL.createObjectURL(wavBlob);
-                    const audio = new Audio(audioUrl);
-
-                    audio.onended = finishSpeaking;
-                    audio.onerror = finishSpeaking;
-
-                    await audio.play();
-                    return;
-                }
-            } catch (e) {
-                console.log("Gemini TTS fallback to browser Web Speech API:", e);
-            }
-
-            // Web Speech API Fallback
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel();
-                const utterance = new SpeechSynthesisUtterance(introText);
-                utterance.rate = 0.88;
-                utterance.pitch = 1.0;
-                utterance.lang = 'en-US';
-
-                utterance.onend = finishSpeaking;
-                utterance.onerror = finishSpeaking;
-
-                window.speechSynthesis.speak(utterance);
-            } else {
-                finishSpeaking();
-            }
-        }
-
-        // Voice Announcement Intro Function (Gemini TTS with Web Speech API fallback)
-        async function playVoiceIntro() {
-            const voiceBtnText = document.getElementById('voiceBtnText');
-            const introText = "Welcome to the 1st round: Math Madness! Instructions: Calculate the sum of all 100 integers in the grid as fast as possible! Good luck to all competitors!";
-
-            if (isSpeakingIntro) {
-                if ('speechSynthesis' in window) {
-                    window.speechSynthesis.cancel();
-                }
-                isSpeakingIntro = false;
-                voiceBtnText.innerText = "Play Voice Intro";
-                return;
-            }
-
-            isSpeakingIntro = true;
-            voiceBtnText.innerText = "🔊 Speaking...";
-
-            // Play background fanfare audio sting
-            playIntroFanfareSound();
-
-            // 1. Try Gemini TTS API with explicit instruction for normal steady pacing
-            try {
-                const payload = {
-                    contents: [{ 
-                        parts: [{ 
-                            text: `Say in a grand, clear, composed, and articulate pace like a professional competition stadium announcer speaking at a normal moderate speed (do NOT talk fast, speak at a normal steady tempo): ${introText}` 
-                        }] 
-                    }],
-                    generationConfig: {
-                        responseModalities: ["AUDIO"],
-                        speechConfig: {
-                            voiceConfig: { prebuiltVoiceConfig: { voiceName: "Puck" } }
-                        }
-                    }
-                };
-
-                const apiKey = "";
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
-
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                const result = await response.json();
-                const part = result?.candidates?.[0]?.content?.parts?.[0];
-                const audioData = part?.inlineData?.data;
-                const mimeType = part?.inlineData?.mimeType;
-
-                if (audioData && mimeType) {
-                    const sampleRateMatch = mimeType.match(/rate=(\d+)/);
-                    const sampleRate = sampleRateMatch ? parseInt(sampleRateMatch[1], 10) : 24000;
-
-                    const binaryData = atob(audioData);
-                    const pcm16 = new Int16Array(binaryData.length / 2);
-                    for (let i = 0; i < pcm16.length; i++) {
-                        pcm16[i] = binaryData.charCodeAt(i * 2) | (binaryData.charCodeAt(i * 2 + 1) << 8);
-                    }
-
-                    const wavBlob = pcmToWav(pcm16, sampleRate);
-                    const audioUrl = URL.createObjectURL(wavBlob);
-                    const audio = new Audio(audioUrl);
-
-                    audio.onended = () => {
-                        isSpeakingIntro = false;
-                        voiceBtnText.innerText = "Play Voice Intro";
-                    };
-
-                    await audio.play();
-                    return;
-                }
-            } catch (e) {
-                console.log("Gemini TTS fallback to browser Web Speech API:", e);
-            }
-
-            // 2. Web Speech API Fallback with steady/normal speed
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel();
-                const utterance = new SpeechSynthesisUtterance(introText);
-                utterance.rate = 0.88; // Normal clear pace (not fast)
-                utterance.pitch = 1.0;
-                utterance.lang = 'en-US';
-
-                utterance.onend = () => {
-                    isSpeakingIntro = false;
-                    voiceBtnText.innerText = "Play Voice Intro";
-                };
-                utterance.onerror = () => {
-                    isSpeakingIntro = false;
-                    voiceBtnText.innerText = "Play Voice Intro";
-                };
-
-                window.speechSynthesis.speak(utterance);
-            } else {
-                isSpeakingIntro = false;
-                voiceBtnText.innerText = "Play Voice Intro";
-            }
-        }
-
-        // Helper function to build WAV audio header for PCM16 speech
-        function pcmToWav(pcm16Data, sampleRate) {
-            const numChannels = 1;
-            const bytesPerSample = 2;
-            const blockAlign = numChannels * bytesPerSample;
-            const byteRate = sampleRate * blockAlign;
-            const dataSize = pcm16Data.length * bytesPerSample;
-            const buffer = new ArrayBuffer(44 + dataSize);
-            const view = new DataView(buffer);
-
-            const writeString = (v, offset, str) => {
-                for (let i = 0; i < str.length; i++) v.setUint8(offset + i, str.charCodeAt(i));
-            };
-
-            writeString(view, 0, 'RIFF');
-            view.setUint32(4, 36 + dataSize, true);
-            writeString(view, 8, 'WAVE');
-            writeString(view, 12, 'fmt ');
-            view.setUint32(16, 16, true);
-            view.setUint16(20, 1, true);
-            view.setUint16(22, numChannels, true);
-            view.setUint32(24, sampleRate, true);
-            view.setUint32(28, byteRate, true);
-            view.setUint16(32, blockAlign, true);
-            view.setUint16(34, 16, true);
-            writeString(view, 36, 'data');
-            view.setUint32(40, dataSize, true);
-
-            let offset = 44;
-            for (let i = 0; i < pcm16Data.length; i++, offset += 2) {
-                view.setInt16(offset, pcm16Data[i], true);
-            }
-
-            return new Blob([buffer], { type: 'audio/wav' });
-        }
 
         function renderGrid() {
             const tbody = document.getElementById('gridBody');
@@ -531,7 +281,6 @@
                 let rowHtml = `<td class="p-1 sm:p-2 border-r grid-cell text-[10px] sm:text-xs font-black ${rowHeaderStyle}">Row ${rIdx + 1}</td>`;
                 
                 row.forEach((val, cIdx) => {
-                    // High-contrast color formatting optimized for projectors
                     let numStyle = '';
                     if (val < 0) {
                         numStyle = isDarkMode ? 'text-rose-400 font-black' : 'text-red-700 font-black';
@@ -766,4 +515,4 @@
         renderGrid();
     </script>
 </body>
-</html> 
+</html>
